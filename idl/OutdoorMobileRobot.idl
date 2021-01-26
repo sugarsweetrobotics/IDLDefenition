@@ -1,0 +1,152 @@
+#ifndef GPSDataTypes_idl
+#define GPSDataTypes_idl
+
+#include "InterfaceDataTypes.idl"
+
+
+module OutdoorMobileRobot{
+
+    enum EarthEllipsoidType
+    {
+        WGS84;  /// Mainly used by GPS
+        GRS80;  /// Mainly used in America, Europe and Japan
+        BESSEL;  /// Mainly used in Japan until 2002
+        SK42;  /// Mainly used in Russia
+        PZ90;  /// Used by GLONASS
+    };
+    
+    /// playerでは0,1,2と定義されている．
+    enum QuorityOfGPS
+    {
+        UNREVEIVABLE;
+        INDEPENDENT_POSITIONING;
+        DGPS;
+    };
+
+    struct GPSData
+    {
+        /// Longitude from GPS
+        double longitude;
+        /// Latitude from GPS
+        double latitude;
+        /// Variance of GPS Data
+        double variance;
+        /// Antenna altitude from average sea level 
+        double altitude;
+        /// quality of gps,
+        QuorityOfGPS quority;
+        /// Number of satellite
+        unsigned short satellite;
+        /// Data received timestamp [ms]
+        unsigned long receivedTimestamp;
+        /// UTM coordinate, east [m]
+        double utm_east;
+        /// UTM coordinate, north [m]
+        double utm_north;
+        /// pdop. pdop^2 = vdop^2 + hdop^2
+        double pdop;
+        double rdop;
+        double gdop;
+        /// vdop
+        double vdop;
+        /// hdop
+        double hdop;
+        /// Earth ellipsoid
+        EarthEllipsoidType earth_ellipsoid_type;
+        /// Ground speed
+        double ground_speed;
+        /// direction
+        unsigned double direction;
+    };
+
+    /*!
+     * @struct TimedGPSData
+     * @brief GPS data include time and accuracy
+     */
+    struct TimedGPSData
+    {
+        /// Time stamp. 
+        RTC::Time tm;
+        /// GpsData
+        GPSData Data;
+    };
+    enum InitGPSReturnStatus {
+        SUCCESS_INITIALIZATION;
+        HIGH_VARIANCE_ERROR;
+        FOUND_OBSTACLE_ERROR;
+
+    };
+
+    typedef sequence<InitGPSDatas> TimedGPSData;
+
+    interface GPSModule
+    {
+        InitGPSReturnStatus initGPSPosition(out InitGPSDatas);
+
+        RETRUN_VALUE getGPSData();
+    };
+    enum MapReturnStatus {
+        // リクエストされたマップの位置をMapServerが何も保持していない場合
+        INVALID_REQUEST;
+    // リクエストされた範囲の中にMapServerが保持していない範囲が含まれているとき、
+    // それを除いて保持している部分だけ返す場合
+    RETURN_PARTIAL_MAP;
+
+    // RETURN_VALUEを拡張
+    // COMMON
+    RETVAL_OK,
+        RETVAL_INVALID_PARAMETER,
+        RETVAL_EMPTY_MAP,
+        RETVAL_INVALID_PRECONDITION,
+        RETVAL_NOT_IMPL,
+        RETVAL_UNKNOWN_ERROR,
+        RETVAL_NOT_FOUND,
+        RETVAL_ODOMETRY_INVALID_VALUE,
+        RETVAL_ODOMETRY_TIME_OUT,
+        RETVAL_RANGE_INVALID_VALUE,
+        RETVAL_RANGE_TIME_OUT,
+        RETVAL_EMERGENCY_STOP,
+        RETVAL_OUTOF_RANGE
+    };
+
+    struct OGMapConfigEx {
+        RTC::Pose2D globalPositionOfTopLeft; // 左上のグローバルな位置情報。
+        double xScale; // スケール。位置画素の広さ。単位はm/pixel。
+        double yScale; // yのスケール
+        RTC::Size2D size; // マップのサイズ。widthとheight。単位はm
+    };
+
+    struct OGMapRequest {
+        RTC::Pose2D globalPositionOfTopLeft;
+        RTC::Size2D size;
+    }
+
+    struct OGMap {
+        OGMapTile data; // マップの実際のデータ
+        OGMapConfigEx config; // マップのコンフィグ
+    };
+
+    interface OGMapServerEX {
+        MapReturnStatus requestLocalMap(
+            in OGMapRequest map_request, out OGMap map
+        );
+    };
+    struct ParticleInfo {
+        Pose2d pose;
+        double score;
+    };
+
+    struct ParticleFilterConfig {
+        string name;
+        unsigned int particle_num;
+        unsigned int generation;
+        unsigned int step;
+    };
+
+    struct ParticleFilter {
+        ParticleFilterConfig config;
+        ParticleInfo data;
+    };
+};
+
+#endif
