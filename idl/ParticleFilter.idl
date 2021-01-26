@@ -1,0 +1,26 @@
+#ifndef GPSDataTypes_idl
+#define GPSDataTypes_idl
+
+#include "InterfaceDataTypes.idl"
+
+
+module Particle{
+    struct ParticleInfo {
+        Pose2d pose;
+        double score;
+    };
+
+    struct ParticleFilterConfig {
+        string name;
+        unsigned int particle_num;
+        unsigned int generation;
+        unsigned int step;
+    };
+
+    struct ParticleFilter{
+        ParticleFilterConfig config;
+        ParticleInfo data;
+    };
+};
+
+#endif
